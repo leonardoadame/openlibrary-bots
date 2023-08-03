@@ -33,8 +33,7 @@ with open(infile) as f:
         isbn_13 = book.get("isbn_13", [])
         isbn_10 = book.get("isbn_10", [])
         for isbn in isbn_13 + isbn_10:
-            canonical = isbnlib.get_canonical_isbn(isbn)
-            if canonical:
+            if canonical := isbnlib.get_canonical_isbn(isbn):
                 if len(canonical) == 10:
                     canonical = isbnlib.to_isbn13(canonical)
                 good_isbn.append(canonical)

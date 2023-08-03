@@ -49,12 +49,10 @@ class OnixParser:
 
         IDENTIFIER_TYPES = {"02": "isbn10", "15": "isbn13"}
 
-        found_identifiers = {}
-        for identifier in identifiers:
-            found_identifiers[IDENTIFIER_TYPES.get(identifier[0].text)] = identifier[
-                1
-            ].text
-
+        found_identifiers = {
+            IDENTIFIER_TYPES.get(identifier[0].text): identifier[1].text
+            for identifier in identifiers
+        }
         titles = product.xpath("/Product/Title")
 
         for title in titles:
@@ -62,11 +60,7 @@ class OnixParser:
 
         authors = product.xpath("/Product/Author")
 
-        book_authors = []
-
-        for author in authors:
-            book_authors.append(author[1].text)
-
+        book_authors = [author[1].text for author in authors]
         publishers = product.xpath("/Product/Publisher")
 
         for publisher in publishers:
@@ -141,20 +135,16 @@ class OnixParser:
 
                 for author in author_list:
                     # Concatenate to form one big string
-                    new_author = new_author + '"' + author.split(",")[0] + '"' + "OR"
+                    new_author = f'{new_author}"' + author.split(",")[0] + '"' + "OR"
 
                 # Remove the last OR at the end of the string
                 new_author = new_author[:-2]
 
-                if len(author_list):
-                    url = (
-                        "http://openlibrary.org/search.json?q=title:"
-                        + str(new_title)
-                        + "+author:"
-                        + str(new_author)
-                    )
-                else:
-                    url = "http://openlibrary.org/search.json?q=title:" + str(new_title)
+                url = (
+                    f"http://openlibrary.org/search.json?q=title:{str(new_title)}+author:{str(new_author)}"
+                    if len(author_list)
+                    else f"http://openlibrary.org/search.json?q=title:{str(new_title)}"
+                )
             except (IndexError, ValueError):
                 print("Index Error for Authors")
 
@@ -179,7 +169,7 @@ class OnixParser:
                     ):
                         count = count + 1
                         final_onix_records.append(record)
-                        print("Count: " + str(count))
+                        print(f"Count: {str(count)}")
                         print(record[0])
             except Exception as e:
                 print("URL Exception: URL can't be created")

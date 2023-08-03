@@ -23,7 +23,7 @@ def general_info():
     cur = db.cursor
     cur.execute("SELECT name FROM sqlite_master WHERE type='table';")
     table = cur.fetchone()
-    print("Table name is: " + str(table))
+    print(f"Table name is: {str(table)}")
 
 
 # Allows users to search for books which do not have an Open Library ID
@@ -33,7 +33,7 @@ def find_books():
     id = (None, None)
     cur.execute("SELECT * FROM data WHERE ia_books_id is ? AND ia_works_id is ?;", id)
     data = cur.fetchall()
-    print("Number of books not on Open Library are: " + len(data))
+    print(f"Number of books not on Open Library are: {len(data)}")
 
 
 if __name__ == "__main__":

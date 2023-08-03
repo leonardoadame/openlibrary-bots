@@ -47,10 +47,7 @@ class CollectorHandler:
     def __init__(self, parser, base):
         self.parser = parser
         base_collector = None
-        if isinstance(base, Collector):
-            base_collector = base
-        else:
-            base_collector = NodeCollector(base)
+        base_collector = base if isinstance(base, Collector) else NodeCollector(base)
         self.collectors = [base_collector]
         base_collector.start(None, self)
         self.set_handler()
@@ -62,10 +59,7 @@ class CollectorHandler:
             raise Exception("CollectorHandler.get_value(): collection not finished")
 
     def top_collector(self):
-        if not len(self.collectors):
-            return None
-        else:
-            return self.collectors[-1]
+        return None if not len(self.collectors) else self.collectors[-1]
 
     def push_collector(self, collector):
         self.collectors.append(collector)
@@ -122,20 +116,18 @@ class NodeCollector(Collector):
             self.ignoring += 1
         else:
             (uri, localname) = name
-            c_maker = self.collector_table.get(localname) or self.collector_table.get(
-                collector_any
-            )
-            if c_maker:
+            if c_maker := self.collector_table.get(
+                localname
+            ) or self.collector_table.get(collector_any):
                 c = c_maker(name, attrs)
                 c.start(self, self.handler)
                 self.handler.push_collector(c)
+            elif self.strict:
+                raise Exception(
+                    f"no handler for element '{localname}'; handlers: {self.collector_table.keys()}"
+                )
             else:
-                if self.strict:
-                    raise Exception(
-                        f"no handler for element '{localname}'; handlers: {self.collector_table.keys()}"
-                    )
-                else:
-                    self.ignoring += 1
+                self.ignoring += 1
 
     def endElementNS(self, name, qname):
         if self.ignoring:

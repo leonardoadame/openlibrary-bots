@@ -54,8 +54,7 @@ class FixPromiseItems:
 
                 try:
                     edition = self.ol.get(edition_olid)
-                    modified_fields = self.update_edition(edition)
-                    if modified_fields:
+                    if modified_fields := self.update_edition(edition):
                         self.modified += 1
                         if not self.dry_run:
                             edition.save(f"Modified {', '.join(modified_fields)}")
@@ -64,8 +63,6 @@ class FixPromiseItems:
                 except Exception:
                     self.write_error(self.error_file, line[:-1])
                     self.errors += 1
-                    pass
-
         num_processed = self.modified + self.errors + self.matched
         if not self.dry_run:
             self.write_state(self.state_file, self.start_line + num_processed)
@@ -82,8 +79,6 @@ class FixPromiseItems:
         return fields[1].split("/")[-1]
 
     def update_edition(self, edition):
-        modified_fields = []
-
         id_count = len(edition.local_id)
 
         local_id = next(
@@ -101,8 +96,7 @@ class FixPromiseItems:
 
         edition.local_id = updated_ids
 
-        modified_fields.append("local IDs")
-
+        modified_fields = ["local IDs"]
         # Fix identifiers:
         amazon_ids = edition.identifiers.pop("amazon", None)
         bwb_ids = edition.identifiers.pop("better_world_books", None)
@@ -222,8 +216,7 @@ def configure_and_start(args):
     start_line = None
     if state_path.exists():
         with state_path.open("r") as f:
-            line = f.readline()
-            if line:
+            if line := f.readline():
                 start_line = int(line)
 
     args.start_line = (

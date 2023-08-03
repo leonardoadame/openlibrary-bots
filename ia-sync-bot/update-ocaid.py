@@ -14,11 +14,8 @@ infile = "olids-to-update.txt"
 
 
 def sync_ol_to_ia(olid):
-    r = ol.session.get(ol.base_url + "/admin/sync?edition_id=" + olid)
-    if r.status_code == 500:
-        content = {"error": "HTTP 500"}
-    else:
-        content = r.json()
+    r = ol.session.get(f"{ol.base_url}/admin/sync?edition_id={olid}")
+    content = {"error": "HTTP 500"} if r.status_code == 500 else r.json()
     if (
         "error" in content and "no changes to _meta.xml" not in content["error"]
     ):  # and r.json()['error'] == 'No qualifying edition':

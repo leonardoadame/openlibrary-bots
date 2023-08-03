@@ -8,6 +8,7 @@ Output: 'wishlist_works_may_2018.csv'
 * Parameters include `isbn_10`, `isbn_13`, `author`, `title`, `language`, `oclc`, `date`
 """
 
+
 import csv
 import os
 import time
@@ -32,9 +33,7 @@ if not os.path.exists("data/wish_list_march_2018.ndjson"):
 # Fetches all ISBNs which are currently not added to Open Library
 with open("data/ol_works.csv") as csvfile:
     csvreader = csv.reader(csvfile)
-    for row in csvreader:
-        isbn_data.append(row[0])
-
+    isbn_data.extend(row[0] for row in csvreader)
 # ISBNs are added as a set to avoid any duplication
 isbn_set = set(isbn_data)
 

@@ -22,12 +22,10 @@ onix_shortnames = None
 
 
 def init():
-    f = open(codelists_path)
-    onix_codelists = parse_codelists(f)
-    f.close()
-    f = open(ref_dtd_path)
-    onix_shortnames = parse_shortnames(f)
-    f.close()
+    with open(codelists_path) as f:
+        onix_codelists = parse_codelists(f)
+    with open(ref_dtd_path) as f:
+        onix_shortnames = parse_shortnames(f)
 
 
 class OnixProduct:
@@ -56,12 +54,11 @@ class OnixProduct:
         values = self.p[name:]
         if slicing:
             return map(OnixProduct.reify_child, values)
-        else:
-            if len(values) == 0:
-                raise KeyError(f"no value for {reference_name} ({name})")
-            elif len(values) > 1:
-                raise Exception(f"more than one value for {reference_name} ({name})")
-            return OnixProduct.reify_child(values[0])
+        if len(values) == 0:
+            raise KeyError(f"no value for {reference_name} ({name})")
+        elif len(values) > 1:
+            raise Exception(f"more than one value for {reference_name} ({name})")
+        return OnixProduct.reify_child(values[0])
 
     def get(self, n):
         try:
@@ -78,8 +75,8 @@ class OnixProduct:
     def __str__(self):
         return self.__unicode__()
 
-    def pi_type_name(code):
-        return onix_codelists["List5"][code][0]
+    def pi_type_name(self):
+        return onix_codelists["List5"][self][0]
 
     @staticmethod
     def contributor_role(code):

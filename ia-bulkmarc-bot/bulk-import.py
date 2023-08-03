@@ -41,7 +41,7 @@ def log_error(response):
     n = 0
     current_errors = glob("error*.html")
     for f in current_errors:
-        n = max(n, 1 + int(re.search(r"[0-9]+", os.path.splitext(f)[0]).group(0)))
+        n = max(n, 1 + int(re.search(r"[0-9]+", os.path.splitext(f)[0])[0]))
     name = "error_%d.html" % n
     with open(name, "w") as error_log:
         error_log.write(response.content.decode())
@@ -52,19 +52,23 @@ def next_record(identifier, ol):
     """
     identifier: '{}/{}:{}:{}'.format(item, fname, offset, length)
     """
-    current = ol.session.get(ol.base_url + "/show-records/" + identifier)
+    current = ol.session.get(f"{ol.base_url}/show-records/{identifier}")
     m = re.search(
         r'<a href="\.\./[^/]+/[^:]+:([0-9]+):([0-9]+)".*Next</a>', current.text
     )
     next_offset, next_length = m.groups()
     # Follow redirect to get actual length (next_length is always 5 to trigger the redirect)
     r = ol.session.head(
-        ol.base_url
-        + "/show-records/"
-        + re.search(r"^[^:]*", identifier).group(0)
-        + f":{next_offset}:{next_length}"
+        (
+            (
+                ol.base_url
+                + "/show-records/"
+                + re.search(r"^[^:]*", identifier)[0]
+            )
+            + f":{next_offset}:{next_length}"
+        )
     )
-    next_length = re.search(r"[^:]*$", r.headers.get("Location", "5")).group(0)
+    next_length = re.search(r"[^:]*$", r.headers.get("Location", "5"))[0]
     return int(next_offset), int(next_length)
 
 
@@ -147,7 +151,7 @@ if __name__ == "__main__":
         if barcode is True:
             # display available local_ids
             print("Available local_ids to import:")
-            r = ol.session.get(ol.base_url + "/local_ids.json")
+            r = ol.session.get(f"{ol.base_url}/local_ids.json")
             print(LOCAL_ID.findall(r.json()["body"]["value"]))
         if item:
             # List MARC21 files, then quit.
@@ -194,7 +198,7 @@ if __name__ == "__main__":
             elif status == 500:
                 # In debug mode 500s produce HTML with details of the error
                 m = re.search(r"<h1>(.*)</h1>", r.text)
-                error_summary = m and m.group(1) or r.text
+                error_summary = m and m[1] or r.text
                 # Write error log
                 error_log = log_error(r)
                 print(
@@ -215,8 +219,6 @@ if __name__ == "__main__":
                 length = 5
                 print(f"{offset}:{length}")
                 continue
-            else:  # 4xx errors should have json content, to be handled in default 200 flow
-                pass
         except ConnectionError as e:
             print(f"CONNECTION ERROR: {e.args[0]}")
             sleep(SHORT_CONNECT_WAIT)

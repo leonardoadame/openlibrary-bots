@@ -28,7 +28,7 @@ class CommaTheBotJob(AbstractBotJob):
         if edition_title is None:
             return False  # no title given
 
-        return True if (self.pattern.search(edition_title)) else False
+        return bool((self.pattern.search(edition_title)))
 
     def fix_title(self, edition_title: str) -> str:
         match = self.pattern.search(edition_title)

@@ -16,10 +16,7 @@ class NormalizeISBNJob(olclient.AbstractBotJob):
         Returns True if the given string contains one or two unformatted isbns
         Returns False otherwise
         """
-        if len(isbn) > 10 and parse_isbns(isbn):
-            return True
-        else:
-            return False
+        return bool(len(isbn) > 10 and parse_isbns(isbn))
 
     def run(self) -> None:
         """Looks for any ISBNs with extra non-numeric characters"""
@@ -27,7 +24,7 @@ class NormalizeISBNJob(olclient.AbstractBotJob):
         header = {"type": 0, "key": 1, "revision": 2, "last_modified": 3, "JSON": 4}
         comment = "normalize ISBN"
         with gzip.open(self.args.file, "rb") as fin:
-            for row_num, row in enumerate(fin):
+            for row in fin:
                 row = row.decode().split("\t")
                 _json = json.loads(row[header["JSON"]])
                 if _json["type"]["key"] != "/type/edition":
@@ -60,14 +57,13 @@ class NormalizeISBNJob(olclient.AbstractBotJob):
                     normalized_isbns = []
                     isbns = getattr(edition, isbn_type, [])
                     for isbn in isbns:
-                        parsed = parse_isbns(isbn)
-                        if parsed:
+                        if parsed := parse_isbns(isbn):
                             normalized_isbns.extend(parsed)
                         else:
                             normalized_isbns.append(isbn)
 
                     normalized_isbns = dedupe(normalized_isbns)  # remove duplicates
-                    if normalized_isbns != isbns and normalized_isbns != []:
+                    if normalized_isbns not in [isbns, []]:
                         setattr(edition, isbn_type, normalized_isbns)
                         self.logger.info(
                             "\t".join([olid, str(isbns), str(normalized_isbns)])

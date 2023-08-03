@@ -57,27 +57,19 @@ class TestOnixParser(unittest.TestCase):
 
     def test_title(self):
         title = self.op.products[0].title
-        expected_title = "Roman Art"
-
-        self.assertTrue(expected_title == title)
+        self.assertTrue(title == "Roman Art")
 
     def test_publisher(self):
         publisher = self.op.products[0].publisher
-        expected_publisher = "Oxford University Press"
-
-        self.assertTrue(expected_publisher == publisher)
+        self.assertTrue(publisher == "Oxford University Press")
 
     def test_authors(self):
         authors = self.op.products[0].authors
-        expected_authors = ""
-
-        self.assertTrue(expected_authors == authors)
+        self.assertTrue(authors == "")
 
     def test_languages(self):
         languages = self.op.products[0].languages
-        expected_languages = "eng"
-
-        self.assertTrue(expected_languages == languages)
+        self.assertTrue(languages == "eng")
 
     def test_identifiers(self):
         identifiers = self.op.products[0].identifiers
@@ -99,15 +91,11 @@ class TestOnixParser(unittest.TestCase):
 
     def test_publication_country(self):
         publication_country = self.op.products[0].publication_country
-        expected_publication_country = "GB"
-
-        self.assertTrue(expected_publication_country == publication_country)
+        self.assertTrue(publication_country == "GB")
 
     def test_publication_city(self):
         publication_city = self.op.products[0].publication_city
-        expected_publication_city = "Oxford"
-
-        self.assertTrue(expected_publication_city == publication_city)
+        self.assertTrue(publication_city == "Oxford")
 
     def test_json(self):
         onix_json = self.op.products[0].get_json
@@ -144,10 +132,9 @@ class TestOnixProductBot(unittest.TestCase):
         self.data = self.opb.data
 
     def test_onix_identifiers(self):
-        expected_status = 0
         self.opb.check_identifiers
 
-        self.assertTrue(expected_status == self.opb.status)
+        self.assertTrue(self.opb.status == 0)
 
 
 class OnixFeedParser:
@@ -228,9 +215,7 @@ class OnixProductParser:
         book_authors = []
 
         if authors:
-            for author in authors:
-                book_authors.append(author[1].text)
-
+            book_authors.extend(author[1].text for author in authors)
         return book_authors if authors else ""
 
     @property
@@ -280,13 +265,11 @@ class OnixProductParser:
         if identifiers:
             IDENTIFIER_TYPES = {"02": "isbn10", "15": "isbn13"}
 
-            found_identifiers = {}
-            for identifier in identifiers:
-                if IDENTIFIER_TYPES.get(identifier[0].text):
-                    found_identifiers[
-                        IDENTIFIER_TYPES.get(identifier[0].text)
-                    ] = identifier[1].text
-
+            found_identifiers = {
+                IDENTIFIER_TYPES.get(identifier[0].text): identifier[1].text
+                for identifier in identifiers
+                if IDENTIFIER_TYPES.get(identifier[0].text)
+            }
         return found_identifiers if identifiers else ""
 
     @property
@@ -371,15 +354,15 @@ class OnixProductParser:
             >>> p = op.products[0]
             >>> p.get_json
         """
-        data = {}
-
-        data["title"] = self.title
-        data["publication_country"] = self.publication_country
-        data["publication_city"] = self.publication_city
-        data["identifiers"] = self.identifiers
-        data["authors"] = self.authors
-        data["publishers"] = self.publisher
-        data["languages"] = self.languages
+        data = {
+            "title": self.title,
+            "publication_country": self.publication_country,
+            "publication_city": self.publication_city,
+            "identifiers": self.identifiers,
+            "authors": self.authors,
+            "publishers": self.publisher,
+            "languages": self.languages,
+        }
 
         return json.dumps(data)
 
@@ -438,23 +421,18 @@ class OnixProductBot:
 
             for author in author_list:
                 # Concatenate to form one big string
-                new_author = new_author + '"' + author.split(",")[0] + '"' + "OR"
+                new_author = f'{new_author}"' + author.split(",")[0] + '"' + "OR"
 
             # Remove the last OR at the end of the string
             new_author = new_author[:-2]
         except (IndexError, ValueError):
             print("Index Error for Authors")
 
-        if len(author_list):
-            url = (
-                "http://openlibrary.org/search.json?q=title:"
-                + str(new_title)
-                + "+author:"
-                + str(new_author)
-            )
-        else:
-            url = "http://openlibrary.org/search.json?q=title:" + str(new_title)
-
+        url = (
+            f"http://openlibrary.org/search.json?q=title:{str(new_title)}+author:{str(new_author)}"
+            if len(author_list)
+            else f"http://openlibrary.org/search.json?q=title:{str(new_title)}"
+        )
         try:
             print(url)
             r = requests.get(url)

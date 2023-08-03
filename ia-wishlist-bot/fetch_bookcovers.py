@@ -43,26 +43,23 @@ def random_headers():
 
 # Method to fetch bookcovers by Amazon
 def fetch_bookcovers_amazon(isbn):
-    url = "https://www.amazon.com/~/dp/" + str(isbn) + "/"
+    url = f"https://www.amazon.com/~/dp/{str(isbn)}/"
     r = requests.get(url, headers=random_headers())
     data = r.text
     soup = BeautifulSoup(data, "lxml")
     bookcover = soup.find_all("img", {"id": "imgBlkFront"})
     print(bookcover[0].attr["data-a-dynamic-image"])
-    image_url = bookcover[0].attr["data-a-dynamic-image"]
-
-    return image_url
+    return bookcover[0].attr["data-a-dynamic-image"]
 
 
 # Bookcover URLs for Betterworld Books
 def fetch_bookcovers_betterworld(isbn10, isbn13):
-    url = "https://images.betterworldbooks.com/" + isbn10[0:3] + "/" + isbn13 + ".jpg"
-    return url
+    return f"https://images.betterworldbooks.com/{isbn10[:3]}/{isbn13}.jpg"
 
 
 # Method to fetch Bookcovers from Google
 def fetch_bookcovers_google(isbn):
-    url = "https://www.googleapis.com/books/v1/volumes?q=isbn:" + str(isbn)
+    url = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{str(isbn)}"
 
     print(url)
     r = requests.get(url)

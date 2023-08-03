@@ -94,9 +94,7 @@ def load_nyt_bestseller_list(list_name):
     if len(results["results"]) != results["num_results"]:
         LOG(
             "ERROR",
-            "expected {} result for {}, got {}".format(
-                results["num_results"], len(results["results"]), list_name
-            ),
+            f'expected {results["num_results"]} result for {len(results["results"])}, got {list_name}',
         )
 
     return results["results"]
@@ -190,10 +188,7 @@ def write_machine_tags(ln, books):
         nyt = key_to_nyt[work["key"]]
         tags = (
             "New York Times bestseller",
-            "nyt:{}={}".format(
-                "_".join([s.lower() for s in ln.split()]),
-                _get_first_bestseller_date(nyt),
-            ),
+            f'nyt:{"_".join([s.lower() for s in ln.split()])}={_get_first_bestseller_date(nyt)}',
         )
         if "subjects" not in work:
             work["subjects"] = list(tags)
@@ -213,11 +208,7 @@ def write_machine_tags(ln, books):
         if work["key"] not in write:
             LOG(
                 "INFO",
-                "all tags already present, skipping {}: '{}' by {}".format(
-                    work["key"],
-                    nyt["book_details"][0]["title"],
-                    nyt["book_details"][0]["author"],
-                ),
+                f"""all tags already present, skipping {work["key"]}: '{nyt["book_details"][0]["title"]}' by {nyt["book_details"][0]["author"]}""",
             )
         else:
             LOG("DEBUG", f"Adding tags ({', '.join(tags)}) to {work['key']}")
@@ -274,19 +265,12 @@ if __name__ == "__main__":
             if not ol_keys:
                 LOG(
                     "WARN",
-                    "unable to reconcile '{}' by {} - no OL book found".format(
-                        book["book_details"][0]["title"],
-                        book["book_details"][0]["author"],
-                    ),
+                    f"""unable to reconcile '{book["book_details"][0]["title"]}' by {book["book_details"][0]["author"]} - no OL book found""",
                 )
             if not (key for key in ol_keys if key.startswith("/works/")):
                 LOG(
                     "WARN",
-                    "only editions for '{}' by {}: {}".format(
-                        book["book_details"][0]["title"],
-                        book["book_details"][0]["author"],
-                        ol_keys,
-                    ),
+                    f"""only editions for '{book["book_details"][0]["title"]}' by {book["book_details"][0]["author"]}: {ol_keys}""",
                 )
             results[ln].append(
                 {

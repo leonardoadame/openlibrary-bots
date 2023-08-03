@@ -7,6 +7,7 @@ Output: 'Adding books to the Open Library'
 * Open Library Objects put up on Open Library
 """
 
+
 # Used to convert list in the form of
 # string back into a list
 import ast
@@ -59,21 +60,16 @@ with open(FILE) as infile:
 
         for author in author_list:
             # Concatenate to form one big string
-            new_author = new_author + '"' + author.split(",")[0] + '"' + "OR"
+            new_author = f'{new_author}"' + author.split(",")[0] + '"' + "OR"
 
         # Remove the last OR at the end of the string
         new_author = new_author[:-2]
 
-        if len(author_list):
-            url = (
-                "http://openlibrary.org/search.json?q=title:"
-                + str(new_title)
-                + "+author:"
-                + str(new_author)
-            )
-        else:
-            url = "http://openlibrary.org/search.json?q=title:" + str(new_title)
-
+        url = (
+            f"http://openlibrary.org/search.json?q=title:{str(new_title)}+author:{str(new_author)}"
+            if len(author_list)
+            else f"http://openlibrary.org/search.json?q=title:{str(new_title)}"
+        )
         print(url)
         r = requests.get(url)
         if r.status_code == 200:
@@ -89,7 +85,7 @@ with open(FILE) as infile:
             if work is None and work1 is None and not match and count != 1000:
                 count = count + 1
                 value.append(row)
-                print("Count: " + str(count))
+                print(f"Count: {str(count)}")
                 print(row[0])
             elif count == 1000:
                 with open("data/new_wishlist_salman_1000.csv", "w") as outfile:
@@ -101,4 +97,4 @@ with open(FILE) as infile:
                 print("Work already exists")
                 # print(row[0])
         else:
-            print(str(row[0]) + " has been skipped")
+            print(f"{str(row[0])} has been skipped")

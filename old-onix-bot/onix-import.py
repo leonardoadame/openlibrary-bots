@@ -165,7 +165,7 @@ def edition_name_choices(x):
     # use up to 25 chars of title, including last word
     title = name_safe(x["title"])
     title_words = [w for w in title.split() if w.lower() not in ignore_title_words]
-    if len(title_words) == 0:
+    if not title_words:
         raise Exception("no usable title chars")
     ttail = title_words.pop(-1)
     tlen = len(ttail)
@@ -178,12 +178,12 @@ def edition_name_choices(x):
             w = title_words.pop(0)
             wlen = len(w)
             if nlen + 1 + wlen < 25:
-                name += "_" + w
+                name += f"_{w}"
                 nlen += 1 + wlen
     if name:
         name += "_"
     name += ttail
-    name = name[0:30]
+    name = name[:30]
     yield name
 
     if ed_number := x.get("edition_number"):
@@ -241,10 +241,7 @@ def massage_value(v):
 
 
 def massage_dict(d):
-    dd = {}
-    for k, v in d.iteritems():
-        dd[k] = massage_value(v)
-    return dd
+    return {k: massage_value(v) for k, v in d.iteritems()}
 
 
 if __name__ == "__main__":

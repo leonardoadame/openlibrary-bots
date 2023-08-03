@@ -91,9 +91,7 @@ def process_csv(filename):
     with open(filename) as infile:
         reader = csv.reader(infile)
 
-        book_data = list(reader)
-
-        return book_data
+        return list(reader)
 
 
 def parse_wishlist_csv_row_to_dict(csv):
@@ -103,7 +101,7 @@ def parse_wishlist_csv_row_to_dict(csv):
         >>> parse_wishlist_csv_row_to_dict("foo,bar,baz,qux")
         { "author": "foo", "title": "bar", ...}
     """
-    book = {
+    return {
         "title": csv[0],
         "authors": ast.literal_eval(csv[1]),
         "language": csv[2],
@@ -112,7 +110,6 @@ def parse_wishlist_csv_row_to_dict(csv):
         "isbn10": csv[5],
         "isbn13": csv[6],
     }
-    return book
 
 
 import re
@@ -126,7 +123,7 @@ def get_author_object(author_name, author_birth_date=None, author_death_date=Non
     """
     if "," in author_name:
         author_name = author_name.split(",")
-        author_name = author_name[1] + " " + author_name[0]
+        author_name = f"{author_name[1]} {author_name[0]}"
 
     while True:
         author_name_new = re.sub(r"\([^\(]*?\)", r"", author_name)
@@ -142,18 +139,17 @@ def get_author_object(author_name, author_birth_date=None, author_death_date=Non
 
 def get_bookcover(book):
     url = (
-        "https://images.betterworldbooks.com/"
-        + book.get("isbn10")[0:3]
-        + "/"
+        (
+            ("https://images.betterworldbooks.com/" + book.get("isbn10")[:3])
+            + "/"
+        )
         + book.get("isbn13")
         + ".jpg"
     )
 
     r = requests.get(url)
 
-    if r.status_code == 200:
-        return url
-    return None
+    return url if r.status_code == 200 else None
 
 
 def add_book_via_olclient(book, author_list, bookcover=None):
@@ -184,11 +180,9 @@ def add_book_via_olclient(book, author_list, bookcover=None):
 
 
 def process_book(book):
-    # make sure we've normalized the author name (e.g. first last?)
-    author_list = []
-    for author_name in book.get("authors"):
-        author_list.append(get_author_object(author_name))
-
+    author_list = [
+        get_author_object(author_name) for author_name in book.get("authors")
+    ]
     # Bookcover search, etc
     bookcover = get_bookcover(book)
 

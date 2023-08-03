@@ -39,21 +39,14 @@ class Biblio:
 
     def subjects(self):
         subjects = data[91:100]
-        subjects = [s.capitalize().replace("_", ", ") for s in subjects if s]
-        # subjects += data[101:120]
-        # subjects += data[153:158]
-        return subjects
+        return [s.capitalize().replace("_", ", ") for s in subjects if s]
 
     def contributors(self):
-        contributors = []
-        for i in range(5):
-            contributors.append(
-                [self.data[21 + i * 3], self.data[22 + i * 3], self.data[23 + i * 3]]
-            )
-
-        # form list of author dicts
-        authors = [self.make_author(c) for c in contributors if c[0]]
-        return authors
+        contributors = [
+            [self.data[21 + i * 3], self.data[22 + i * 3], self.data[23 + i * 3]]
+            for i in range(5)
+        ]
+        return [self.make_author(c) for c in contributors if c[0]]
 
     def make_author(self, contributor):
         author = {"name": contributor[0]}
@@ -66,7 +59,7 @@ class Biblio:
         return author
 
     def json(self, decode=False):
-        a = {
+        return {
             "title": self.title,
             "isbn_13": [self.isbn],
             "publish_date": self.publication_date,
@@ -78,7 +71,6 @@ class Biblio:
             "subjects": self.subjects,
             "source_records": [f"bwb:{self.isbn}"],
         }
-        return a
 
 
 if __name__ == "__main__":

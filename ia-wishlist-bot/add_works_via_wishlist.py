@@ -43,15 +43,12 @@ def row2book(new_book):
     author = new_book.get("author", "")
     date = new_book.get("date", "")
 
-    # Define a Book Object
-    added_book = common.Book(
+    return common.Book(
         title=title,
         authors=[common.Author(name=author)],
         publisher="",
         publish_date=date,
     )
-
-    return added_book
 
 
 # Use the Wishlist ndjson file

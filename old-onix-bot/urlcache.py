@@ -13,7 +13,7 @@ class URLCache:
 
     def get_entries(self):
         entries = {}
-        index_file = self.dir + "/index"
+        index_file = f"{self.dir}/index"
         next = 0
         index = open(index_file, "a")  # create index file if it doesn't exist
         index.close()
@@ -34,20 +34,19 @@ class URLCache:
             # open a locked, temporary file to load its data
             index.seek(0, 2)
             index.write(f"{url}\n")
-            data_file = self.dir + "/" + str(next)
-            tmp_data_file = data_file + "-fetching"
-            tmp_data = open(tmp_data_file, "w")
-            flock(tmp_data, LOCK_EX)
-            index.close()
+            data_file = f"{self.dir}/{str(next)}"
+            tmp_data_file = f"{data_file}-fetching"
+            with open(tmp_data_file, "w") as tmp_data:
+                flock(tmp_data, LOCK_EX)
+                index.close()
 
-            # having released the lock on the index, suck data
-            # into the temporary file
-            sys.stderr.write(f"URLCache: fetching {url}\n")
-            net_data = urllib.urlopen(url)
-            shutil.copyfileobj(net_data, tmp_data)
-            tmp_data.flush()
-            os.link(tmp_data_file, data_file)  # the fetch is good: attach it
-            tmp_data.close()  # drop lock on temporary file
+                # having released the lock on the index, suck data
+                # into the temporary file
+                sys.stderr.write(f"URLCache: fetching {url}\n")
+                net_data = urllib.urlopen(url)
+                shutil.copyfileobj(net_data, tmp_data)
+                tmp_data.flush()
+                os.link(tmp_data_file, data_file)  # the fetch is good: attach it
             os.unlink(tmp_data_file)
             id = next
 
@@ -55,23 +54,21 @@ class URLCache:
             # there is already an entry for this url, so release the lock on the index
             index.close()
 
-        data_file = self.dir + "/" + str(id)
+        data_file = f"{self.dir}/{str(id)}"
         if os.path.exists(data_file):
             return open(data_file)
-        else:
             # wait for fetch to finish
-            tmp_data_file = data_file + "-fetching"
-            sys.stderr.write(f"URLCache: waiting for {data_file}\n")
+        tmp_data_file = f"{data_file}-fetching"
+        sys.stderr.write(f"URLCache: waiting for {data_file}\n")
+        try:
             try:
-                try:
-                    tmp_data = open(tmp_data_file)
+                with open(tmp_data_file) as tmp_data:
                     flock(tmp_data, LOCK_SH)
-                    tmp_data.close()
-                except OSError as e:
-                    pass
-                return open(data_file)
-            except Exception as exn:
-                # in case this happens, just blow away your cache
-                raise Exception(
-                    f"URLCache: sorry, corrupted state for url '{url}': {exn!s}"
-                )
+            except OSError as e:
+                pass
+            return open(data_file)
+        except Exception as exn:
+            # in case this happens, just blow away your cache
+            raise Exception(
+                f"URLCache: sorry, corrupted state for url '{url}': {exn!s}"
+            )

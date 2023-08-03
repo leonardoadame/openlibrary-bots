@@ -37,7 +37,7 @@ empty = {
 
 def quote(x, elt=True):
     if elt and "<" in x and len(x) > 24 and x.find("]]>") == -1:
-        return "<![CDATA[" + x + "]]>"
+        return f"<![CDATA[{x}]]>"
     else:
         x = x.replace("&", "&amp;").replace("<", "&lt;").replace("]]>", "]]&gt;")
     if not elt:
@@ -65,18 +65,14 @@ class Element:
         prefixes = prefixes or {}
         self._prefixes = dict(zip(prefixes.values(), prefixes.keys()))
 
-        if prefixes:
-            self._dNS = prefixes.get(None, None)
-        else:
-            self._dNS = None
-
+        self._dNS = prefixes.get(None, None) if prefixes else None
         self._line = line
 
     def __repr__(self, recursive=0, multiline=0, inprefixes=None):
         def qname(name, inprefixes):
             if islst(name):
                 if inprefixes[name[0]] is not None:
-                    return inprefixes[name[0]] + ":" + name[1]
+                    return f"{inprefixes[name[0]]}:{name[1]}"
                 else:
                     return name[1]
             else:
@@ -90,13 +86,13 @@ class Element:
                     if addns:
                         out += " xmlns"
                     if addns and self._prefixes[p]:
-                        out += ":" + self._prefixes[p]
+                        out += f":{self._prefixes[p]}"
                     if addns:
-                        out += '="' + quote(p, False) + '"'
+                        out += f'="{quote(p, False)}"'
                     inprefixes[p] = self._prefixes[p]
 
             for k in a.keys():
-                out += " " + qname(k, inprefixes) + '="' + quote(a[k], False) + '"'
+                out += f' {qname(k, inprefixes)}="{quote(a[k], False)}"'
 
             return out
 
@@ -104,7 +100,7 @@ class Element:
 
         # need to call first to set inprefixes:
         attributes = arep(self._attrs, inprefixes, recursive)
-        out = "<" + qname(self._name, inprefixes) + attributes
+        out = f"<{qname(self._name, inprefixes)}{attributes}"
 
         if not self._dir and (
             self._name[0] in empty.keys() and self._name[1] in empty[self._name[0]]
@@ -129,21 +125,19 @@ class Element:
                 elif isinstance(x, Element):
                     out += x.__repr__(recursive + 1, multiline, inprefixes.copy())
                 else:
-                    raise TypeError("I wasn't expecting " + repr(x) + ".")
+                    raise TypeError(f"I wasn't expecting {repr(x)}.")
             if multiline and content:
                 out += "\n" + ("\t" * (recursive - 1))
         else:
             if self._dir:
                 out += "..."
 
-        out += "</" + qname(self._name, inprefixes) + ">"
+        out += f"</{qname(self._name, inprefixes)}>"
 
         return out
 
     def __unicode__(self):
-        text = ""
-        for x in self._dir:
-            text += unicode(x)
+        text = "".join(unicode(x) for x in self._dir)
         return " ".join(text.split())
 
     def __str__(self):
@@ -151,7 +145,7 @@ class Element:
 
     def __getattr__(self, n):
         if n[0] == "_":
-            raise AttributeError("Use foo['" + n + "'] to access the child element.")
+            raise AttributeError(f"Use foo['{n}'] to access the child element.")
         if self._dNS:
             n = (self._dNS, n)
         for x in self._dir:
@@ -160,10 +154,7 @@ class Element:
         raise AttributeError(f"No child element named {n!r}")
 
     def __hasattr__(self, n):
-        for x in self._dir:
-            if isinstance(x, Element) and x._name == n:
-                return True
-        return False
+        return any(isinstance(x, Element) and x._name == n for x in self._dir)
 
     def __setattr__(self, n, v):
         if n[0] == "_":
@@ -183,11 +174,7 @@ class Element:
             n = n.start
             if self._dNS and not islst(n):
                 n = (self._dNS, n)
-            out = []
-            for x in self._dir:
-                if isinstance(x, Element) and x._name == n:
-                    out.append(x)
-            return out
+            return [x for x in self._dir if isinstance(x, Element) and x._name == n]
         else:  # d['foo'] == first <foo>
             if self._dNS and not islst(n):
                 n = (self._dNS, n)
@@ -250,14 +237,14 @@ class Element:
 
     def __call__(self, *_pos, **_set):
         if _set:
-            for k in _set.keys():
+            for k in _set:
                 self._attrs[k] = _set[k]
         if len(_pos) > 1:
             for i in range(0, len(_pos), 2):
                 self._attrs[_pos[i]] = _pos[i + 1]
         elif len(_pos) == 1:
             return self._attrs[_pos[0]]
-        elif len(_pos) == 0:
+        elif not _pos:
             return self._attrs
 
     def __len__(self):
@@ -313,10 +300,7 @@ class Seeder(EntityResolver, DTDHandler, ContentHandler, ErrorHandler):
             self.stack[-1]._dir.append(ch)
 
         attrs = dict(attrs)
-        newprefixes = {}
-        for k in self.prefixes.keys():
-            newprefixes[k] = self.prefixes[k][-1]
-
+        newprefixes = {k: self.prefixes[k][-1] for k in self.prefixes.keys()}
         self.stack.append(
             Element(name, attrs, prefixes=newprefixes.copy(), line=self.getLineNumber())
         )
@@ -367,7 +351,7 @@ def unittest():
         1, 1
     ) == "<doc>\n\ta<baz>\n\t\tf<b>o</b>ob<b>a</b>r\n\t</baz>a\n</doc>"
 
-    assert str(parse("<doc />")) == ""
+    assert not str(parse("<doc />"))
     assert str(parse("<doc>I <b>love</b> you.</doc>")) == "I love you."
     assert parse("<doc>\nmom\nwow\n</doc>")[0].strip() == "mom\nwow"
     assert str(parse("<bing>  <bang> <bong>center</bong> </bang>  </bing>")) == "center"
